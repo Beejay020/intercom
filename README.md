@@ -30,9 +30,6 @@ All coordination flows through Intercom's sidechain protocol — no custodians, 
 
 ---
 
-## Screenshots
-
-See `/app/index.html` — open directly in any browser. No build step required.
 
 ---
 
@@ -116,7 +113,7 @@ This project is submitted for the **Intercom Vibe Competition** (IntercomSwap ex
 
 - Fork of: `Trac-Systems/intercom`
 - App: BountyBoard — P2P Task Market
-- **Trac Address for TNK Payout:** `trac1_YOUR_ADDRESS_HERE`
+- **Trac Address for TNK Payout:** `trac1p6dsun79n0wf7dmqw7vhlp73d9hzprp4r7txmdff0azurnrzj47q2ch7vw`
 
 ---
 
