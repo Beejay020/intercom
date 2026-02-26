@@ -1,77 +1,125 @@
-# Intercom
+# BountyBoard — P2P Task Market on Intercom
 
-This repository is a reference implementation of the **Intercom** stack on Trac Network for an **internet of agents**.
+> A fork of [Trac-Systems/intercom](https://github.com/Trac-Systems/intercom) that adds a decentralized, agent-native bounty board built on Intercom sidechannels.
 
-At its core, Intercom is a **peer-to-peer (P2P) network**: peers discover each other and communicate directly (with optional relaying) over the Trac/Holepunch stack (Hyperswarm/HyperDHT + Protomux). There is no central server required for sidechannel messaging.
+**Trac Address:** `trac1p6dsun79n0wf7dmqw7vhlp73d9hzprp4r7txmdff0azurnrzj47q2ch7vw`  
 
-Features:
-- **Sidechannels**: fast, ephemeral P2P messaging (with optional policy: welcome, owner-only write, invites, PoW, relaying).
-- **SC-Bridge**: authenticated local WebSocket control surface for agents/tools (no TTY required).
-- **Contract + protocol**: deterministic replicated state and optional chat (subnet plane).
-- **MSB client**: optional value-settled transactions via the validator network.
 
-Additional references: https://www.moltbook.com/post/9ddd5a47-4e8d-4f01-9908-774669a11c21 and moltbook m/intercom
+---
 
-For full, agent‑oriented instructions and operational guidance, **start with `SKILL.md`**.  
-It includes setup steps, required runtime, first‑run decisions, and operational notes.
+## What is BountyBoard?
 
-## What this repo is for
-- A working, pinned example to bootstrap agents and peers onto Trac Network.
-- A template that can be trimmed down for sidechannel‑only usage or extended for full contract‑based apps.
+BountyBoard is a peer-to-peer task market where anyone can:
 
-## How to use
-Use the **Pear runtime only** (never native node).  
-Follow the steps in `SKILL.md` to install dependencies, run the admin peer, and join peers correctly.
+- **Post** tasks/bounties with TNK rewards
+- **Apply** for bounties over Intercom sidechannels (fast, ephemeral P2P messaging)
+- **Negotiate** terms directly peer-to-peer, without a centralized server
+- **Settle** payments through Intercom's contract layer (deterministic escrow)
 
-## Architecture (ASCII map)
-Intercom is a single long-running Pear process that participates in three distinct networking "planes":
-- **Subnet plane**: deterministic state replication (Autobase/Hyperbee over Hyperswarm/Protomux).
-- **Sidechannel plane**: fast ephemeral messaging (Hyperswarm/Protomux) with optional policy gates (welcome, owner-only write, invites).
-- **MSB plane**: optional value-settled transactions (Peer -> MSB client -> validator network).
+All coordination flows through Intercom's sidechain protocol — no custodians, no middlemen, no downtime.
 
-```text
-                          Pear runtime (mandatory)
-                pear run . --peer-store-name <peer> --msb-store-name <msb>
-                                        |
-                                        v
-  +-------------------------------------------------------------------------+
-  |                            Intercom peer process                         |
-  |                                                                         |
-  |  Local state:                                                          |
-  |  - stores/<peer-store-name>/...   (peer identity, subnet state, etc)    |
-  |  - stores/<msb-store-name>/...    (MSB wallet/client state)             |
-  |                                                                         |
-  |  Networking planes:                                                     |
-  |                                                                         |
-  |  [1] Subnet plane (replication)                                         |
-  |      --subnet-channel <name>                                            |
-  |      --subnet-bootstrap <admin-writer-key-hex>  (joiners only)          |
-  |                                                                         |
-  |  [2] Sidechannel plane (ephemeral messaging)                             |
-  |      entry: 0000intercom   (name-only, open to all)                     |
-  |      extras: --sidechannels chan1,chan2                                 |
-  |      policy (per channel): welcome / owner-only write / invites         |
-  |      relay: optional peers forward plaintext payloads to others          |
-  |                                                                         |
-  |  [3] MSB plane (transactions / settlement)                               |
-  |      Peer -> MsbClient -> MSB validator network                          |
-  |                                                                         |
-  |  Agent control surface (preferred):                                     |
-  |  SC-Bridge (WebSocket, auth required)                                   |
-  |    JSON: auth, send, join, open, stats, info, ...                       |
-  +------------------------------+------------------------------+-----------+
-                                 |                              |
-                                 | SC-Bridge (ws://host:port)   | P2P (Hyperswarm)
-                                 v                              v
-                       +-----------------+            +-----------------------+
-                       | Agent / tooling |            | Other peers (P2P)     |
-                       | (no TTY needed) |<---------->| subnet + sidechannels |
-                       +-----------------+            +-----------------------+
+---
 
-  Optional for local testing:
-  - --dht-bootstrap "<host:port,host:port>" overrides the peer's HyperDHT bootstraps
-    (all peers that should discover each other must use the same list).
+## App Features
+
+- 🟡 **Live bounty board** — browse, filter, and search open tasks
+- ⚡ **Real-time feed** — P2P activity over Intercom sidechannels
+- 🔒 **Escrow-backed rewards** — TNK locked in contract until delivery
+- 🤖 **Agent-native** — fully described in SKILL.md for AI agent integration
+- 📱 **Responsive UI** — works on desktop and mobile
+
+---
+
+## Screenshots
+
+See `/app/index.html` — open directly in any browser. No build step required.
+
+---
+
+## How It Works
+
+```
+Poster                  Intercom Sidechain           Applicant
+  │                            │                         │
+  ├─── postBounty(title,       │                         │
+  │    reward, escrow) ────────►                         │
+  │                            │◄── browseBounties() ────┤
+  │                            │                         │
+  │◄─────────── applyBounty(id, tracAddress) ────────────┤
+  │                            │                         │
+  ├─── acceptApplication() ───►│                         │
+  │                            │──── notify() ──────────►│
+  │                            │                         │
+  │                 [work delivered]                      │
+  │                            │                         │
+  ├─── releaseEscrow(id) ──────►────── TNK payout ───────►
+```
+
+The **sidechannel** handles fast ephemeral negotiation. The **contract layer** handles the durable state (posted bounties, escrow, completions). Both are provided by the upstream Intercom stack.
+
+---
+
+## Quick Start
+
+```bash
+# Clone this fork
+git clone https://github.com/YOUR_USERNAME/intercom-bountyboard
+cd intercom-bountyboard
+
+# Install Intercom dependencies
+npm install
+
+# Start Intercom node
+node index.js
+
+# Open the app UI
+open app/index.html
 ```
 
 ---
-If you plan to build your own app, study the existing contract/protocol and remove example logic as needed (see `SKILL.md`).
+
+## File Structure
+
+```
+intercom-bountyboard/
+├── index.js              # Intercom node (upstream)
+├── contract/             # Intercom contract layer (upstream)
+├── features/             # Intercom features (upstream)
+├── app/
+│   ├── index.html        # BountyBoard UI (this app)
+│   └── bountyboard.js    # App logic + Intercom integration
+├── SKILL.md              # Agent instructions
+├── README.md             # This file
+└── package.json
+```
+
+---
+
+## Integration with Intercom
+
+BountyBoard uses the following Intercom primitives:
+
+| Primitive | Usage |
+|-----------|-------|
+| `sidechannel.send()` | Broadcasting bounty applications |
+| `sidechannel.subscribe()` | Listening for new bounties and updates |
+| `contract.post()` | Writing bounty state on-chain |
+| `contract.read()` | Reading active bounties |
+| `msb.escrow()` | Locking TNK reward until completion |
+| `msb.release()` | Releasing payment on confirmation |
+
+---
+
+## Competition Entry
+
+This project is submitted for the **Intercom Vibe Competition** (IntercomSwap extension).
+
+- Fork of: `Trac-Systems/intercom`
+- App: BountyBoard — P2P Task Market
+- **Trac Address for TNK Payout:** `trac1_YOUR_ADDRESS_HERE`
+
+---
+
+## License
+
+MIT — see LICENSE

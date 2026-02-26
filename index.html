@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BountyBoard — Intercom P2P Task Market</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a08;
+    --surface: #111110;
+    --surface2: #1a1a18;
+    --border: #2a2a26;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --accent3: #47ffe8;
+    --text: #f0f0ea;
+    --muted: #888880;
+    --success: #47ff8a;
+    --danger: #ff4747;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,8,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.3rem;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .logo-mark {
+    width: 28px;
+    height: 28px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: grid;
+    place-items: center;
+    font-size: 0.85rem;
+  }
+
+  .logo-sub {
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 400;
+    margin-left: 0.25rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .peer-status {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+  }
+
+  .pulse-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--success);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    padding: 0.5rem 1.1rem;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: var(--bg);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+
+  .btn:hover { background: transparent; color: var(--accent); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); background: transparent; }
+
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero {
+    margin-bottom: 3rem;
+    padding: 3rem 0 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    color: var(--accent);
+    border: 1px solid rgba(232,255,71,0.3);
+    background: rgba(232,255,71,0.06);
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    margin-bottom: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .hero-desc {
+    color: var(--muted);
+    font-size: 0.9rem;
+    max-width: 520px;
+    line-height: 1.7;
+    margin-bottom: 2rem;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* Board layout */
+  .board-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 0.4rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.3rem;
+  }
+
+  .filter-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 5px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  .search-bar {
+    flex: 1;
+    min-width: 200px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .search-bar:focus { border-color: var(--accent); }
+  .search-bar::placeholder { color: var(--muted); }
+
+  .bounties-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+
+  .bounty-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.4s ease both;
+  }
+
+  .bounty-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .bounty-card:hover {
+    border-color: rgba(232,255,71,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .bounty-card:hover::before { opacity: 1; }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.8rem;
+    gap: 0.5rem;
+  }
+
+  .card-category {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    border: 1px solid currentColor;
+  }
+
+  .cat-dev { color: var(--accent3); border-color: rgba(71,255,232,0.3); background: rgba(71,255,232,0.06); }
+  .cat-design { color: #c084fc; border-color: rgba(192,132,252,0.3); background: rgba(192,132,252,0.06); }
+  .cat-data { color: var(--accent2); border-color: rgba(255,107,53,0.3); background: rgba(255,107,53,0.06); }
+  .cat-research { color: #fbbf24; border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.06); }
+  .cat-content { color: #34d399; border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.06); }
+
+  .reward-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: rgba(232,255,71,0.1);
+    border: 1px solid rgba(232,255,71,0.25);
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    white-space: nowrap;
+    font-family: 'Syne', sans-serif;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+
+  .card-desc {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--border);
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .poster-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  .avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    flex-shrink: 0;
+  }
+
+  .card-meta {
+    display: flex;
+    gap: 0.8rem;
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+
+  .status-badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+
+  .status-open { background: rgba(71,255,138,0.1); color: var(--success); }
+  .status-active { background: rgba(232,255,71,0.1); color: var(--accent); }
+  .status-review { background: rgba(251,191,36,0.1); color: #fbbf24; }
+
+  /* Post bounty modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: none;
+    place-items: center;
+    padding: 2rem;
+  }
+
+  .modal-overlay.open { display: grid; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 520px;
+    animation: modalIn 0.2s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+
+  .close-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: grid;
+    place-items: center;
+    transition: all 0.15s;
+  }
+
+  .close-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  .form-group {
+    margin-bottom: 1.2rem;
+  }
+
+  label {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.4rem;
+  }
+
+  input, textarea, select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem 0.9rem;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    outline: none;
+    transition: border-color 0.15s;
+    resize: none;
+  }
+
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  select { cursor: pointer; }
+  option { background: var(--bg); }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+  }
+
+  /* Activity feed */
+  .sidebar-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .panel-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    letter-spacing: 0.02em;
+  }
+
+  .feed-item {
+    padding: 0.9rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 0.8rem;
+    align-items: flex-start;
+    font-size: 0.75rem;
+    transition: background 0.15s;
+    animation: feedIn 0.3s ease both;
+  }
+
+  @keyframes feedIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .feed-item:hover { background: var(--surface2); }
+  .feed-item:last-child { border-bottom: none; }
+
+  .feed-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    background: var(--surface2);
+  }
+
+  .feed-content { flex: 1; }
+  .feed-time { font-size: 0.67rem; color: var(--muted); margin-top: 0.15rem; }
+
+  /* Two column layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .bounties-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    padding: 0.8rem 1.2rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    z-index: 500;
+    display: none;
+    align-items: center;
+    gap: 0.6rem;
+    animation: toastIn 0.3s ease;
+    max-width: 300px;
+  }
+
+  .toast.show { display: flex; }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 1rem;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+    display: none;
+  }
+
+  .network-indicator {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    font-size: 0.7rem;
+    color: var(--muted);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 200px;
+  }
+
+  .net-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .net-val { color: var(--text); font-weight: 500; }
+
+  .apply-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .apply-btn:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">⬡</div>
+    BountyBoard
+    <span class="logo-sub">on Intercom</span>
+  </div>
+  <div class="header-right">
+    <div class="peer-status">
+      <div class="pulse-dot"></div>
+      <span id="peerCount">4 peers</span>
+    </div>
+    <button class="btn btn-ghost" id="viewMyBtn">My Board</button>
+    <button class="btn" onclick="openModal()">+ Post Bounty</button>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-tag">⬡ P2P · Trac Network · Trustless</div>
+    <h1>The Open<br><span>Bounty Market</span></h1>
+    <p class="hero-desc">Post tasks, negotiate terms, and settle payments peer-to-peer over Intercom sidechannels. No middlemen. Deterministic state. Agent-native.</p>
+    <div class="stats-row" id="statsRow">
+      <div class="stat">
+        <div class="stat-value" id="statOpen">12</div>
+        <div class="stat-label">Open Bounties</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="statTNK">48,200</div>
+        <div class="stat-label">TNK In Escrow</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="statPeers">4</div>
+        <div class="stat-label">Active Peers</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="statDone">37</div>
+        <div class="stat-label">Completed</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="board-controls">
+    <div class="filter-group">
+      <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+      <button class="filter-btn" onclick="setFilter('dev', this)">Dev</button>
+      <button class="filter-btn" onclick="setFilter('design', this)">Design</button>
+      <button class="filter-btn" onclick="setFilter('data', this)">Data</button>
+      <button class="filter-btn" onclick="setFilter('research', this)">Research</button>
+    </div>
+    <input class="search-bar" type="text" placeholder="Search bounties..." id="searchBar" oninput="renderBoard()">
+    <div class="filter-group">
+      <button class="filter-btn active" onclick="setSort('newest', this)">Newest</button>
+      <button class="filter-btn" onclick="setSort('reward', this)">Highest Reward</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div>
+      <div class="section-label" id="resultLabel">12 bounties</div>
+      <div class="bounties-grid" id="bountiesGrid"></div>
+      <div class="empty-state" id="emptyState">No bounties match your filter.</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <div class="sidebar-panel">
+        <div class="panel-title">⚡ Live Activity</div>
+        <div id="activityFeed"></div>
+      </div>
+      <div class="sidebar-panel">
+        <div class="panel-title">🌐 Network</div>
+        <div style="padding:1rem 1.2rem;">
+          <div class="network-indicator" style="position:static;min-width:auto;border:none;padding:0;background:none;">
+            <div class="net-row"><span>Block Height</span><span class="net-val" id="blockHeight">1,204,817</span></div>
+            <div class="net-row"><span>Channel Latency</span><span class="net-val" id="latency">~14ms</span></div>
+            <div class="net-row"><span>Escrow Locked</span><span class="net-val">48,200 TNK</span></div>
+            <div class="net-row"><span>Protocol</span><span class="net-val">Intercom v1</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Post Bounty Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Post a Bounty</div>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="fTitle" placeholder="e.g. Build a P2P price oracle widget">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="fDesc" rows="3" placeholder="Describe the task clearly. What will be delivered?"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category</label>
+        <select id="fCat">
+          <option value="dev">Development</option>
+          <option value="design">Design</option>
+          <option value="data">Data</option>
+          <option value="research">Research</option>
+          <option value="content">Content</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Reward (TNK)</label>
+        <input type="number" id="fReward" placeholder="500" min="1">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Your Trac Address</label>
+      <input type="text" id="fTrac" placeholder="trac1...">
+    </div>
+    <div class="form-group">
+      <label>Deadline (optional)</label>
+      <input type="date" id="fDeadline">
+    </div>
+    <button class="btn" style="width:100%;padding:0.75rem;" onclick="submitBounty()">
+      Broadcast to Intercom Network →
+    </button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span style="color:var(--accent)">✓</span>
+  <span id="toastMsg">Bounty posted!</span>
+</div>
+
+<script>
+const BOUNTIES = [
+  {
+    id: 1, title: "Build a P2P Price Oracle Widget",
+    desc: "Create a lightweight widget that queries multiple Intercom sidechannels for price data and returns a median. TypeScript preferred.",
+    cat: "dev", reward: 3000, status: "open",
+    poster: "vLdT", color: "#47ffe8",
+    posted: Date.now() - 3600000 * 2, applies: 3
+  },
+  {
+    id: 2, title: "Design BountyBoard Brand Identity",
+    desc: "Create logo, color palette, and icon set for the BountyBoard app. Deliverable: Figma file + exported assets.",
+    cat: "design", reward: 1500, status: "open",
+    poster: "Zk9m", color: "#c084fc",
+    posted: Date.now() - 3600000 * 5, applies: 7
+  },
+  {
+    id: 3, title: "Analyze Trac Network Peer Topology",
+    desc: "Using publicly observable peer connections, map the Trac network topology and produce a visual graph + written report.",
+    cat: "data", reward: 2500, status: "active",
+    poster: "8xPq", color: "#ff6b35",
+    posted: Date.now() - 86400000, applies: 2
+  },
+  {
+    id: 4, title: "Document Intercom Sidechannel Protocol",
+    desc: "Read the intercom source and write comprehensive developer documentation (README upgrade). Markdown format, 2000+ words.",
+    cat: "research", reward: 800, status: "open",
+    poster: "nR4w", color: "#fbbf24",
+    posted: Date.now() - 86400000 * 2, applies: 5
+  },
+  {
+    id: 5, title: "Write Intercom Integration Tutorial",
+    desc: "Step-by-step blog post tutorial for integrating Intercom into a Node.js agent. Include code examples, diagrams optional.",
+    cat: "content", reward: 600, status: "review",
+    poster: "vLdT", color: "#34d399",
+    posted: Date.now() - 86400000 * 3, applies: 4
+  },
+  {
+    id: 6, title: "Port Intercom Client to Python",
+    desc: "Port the JavaScript Intercom client to Python 3.10+. Must pass full test coverage. PR-ready code only.",
+    cat: "dev", reward: 5000, status: "open",
+    poster: "Zk9m", color: "#47ffe8",
+    posted: Date.now() - 3600000 * 12, applies: 8
+  },
+  {
+    id: 7, title: "Agent-to-Agent Negotiation Demo",
+    desc: "Build a demo of two AI agents negotiating a trade price over Intercom sidechannels. Any language. Needs a recorded demo.",
+    cat: "dev", reward: 4000, status: "open",
+    poster: "8xPq", color: "#47ffe8",
+    posted: Date.now() - 3600000 * 18, applies: 1
+  },
+  {
+    id: 8, title: "UI Kit for Trac dApps",
+    desc: "Design a Figma component library for building on Trac. Must include: buttons, cards, modals, data tables, charts. Dark mode only.",
+    cat: "design", reward: 2200, status: "open",
+    poster: "nR4w", color: "#c084fc",
+    posted: Date.now() - 86400000 * 4, applies: 6
+  },
+  {
+    id: 9, title: "TNK Market Depth Analysis",
+    desc: "Pull on-chain data and produce a time-series analysis of TNK liquidity and market depth over the past 90 days.",
+    cat: "data", reward: 1800, status: "active",
+    poster: "vLdT", color: "#ff6b35",
+    posted: Date.now() - 86400000 * 1.5, applies: 3
+  },
+  {
+    id: 10, title: "Intercom SKILL.md Template Library",
+    desc: "Create 10+ SKILL.md templates for common Intercom app types (oracle, swap, timestamping, etc.) with agent instructions.",
+    cat: "research", reward: 1200, status: "open",
+    poster: "Zk9m", color: "#fbbf24",
+    posted: Date.now() - 86400000 * 5, applies: 2
+  },
+  {
+    id: 11, title: "Escrow Contract Security Review",
+    desc: "Audit the Intercom escrow contract for vulnerabilities. Deliverable: structured report with severity levels and recommendations.",
+    cat: "research", reward: 6000, status: "open",
+    poster: "8xPq", color: "#fbbf24",
+    posted: Date.now() - 3600000 * 8, applies: 0
+  },
+  {
+    id: 12, title: "BountyBoard Mobile App",
+    desc: "React Native app for BountyBoard. Must support posting, browsing, and applying for bounties. iOS + Android.",
+    cat: "dev", reward: 8000, status: "open",
+    poster: "nR4w", color: "#47ffe8",
+    posted: Date.now() - 86400000 * 0.5, applies: 11
+  }
+];
+
+const CAT_LABELS = { dev: 'Development', design: 'Design', data: 'Data', research: 'Research', content: 'Content' };
+const STATUS_LABELS = { open: 'Open', active: 'In Progress', review: 'In Review' };
+
+let currentFilter = 'all';
+let currentSort = 'newest';
+let userBounties = [...BOUNTIES];
+
+function formatTime(ts) {
+  const diff = Date.now() - ts;
+  if (diff < 3600000) return `${Math.floor(diff/60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff/3600000)}h ago`;
+  return `${Math.floor(diff/86400000)}d ago`;
+}
+
+function formatReward(n) {
+  return n >= 1000 ? `${(n/1000).toFixed(n%1000===0?0:1)}k` : n;
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-group:first-child .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBoard();
+}
+
+function setSort(s, btn) {
+  currentSort = s;
+  document.querySelectorAll('.filter-group:last-child .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBoard();
+}
+
+function renderBoard() {
+  const q = document.getElementById('searchBar').value.toLowerCase();
+  let items = userBounties.filter(b => {
+    if (currentFilter !== 'all' && b.cat !== currentFilter) return false;
+    if (q && !b.title.toLowerCase().includes(q) && !b.desc.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  if (currentSort === 'reward') items.sort((a,b) => b.reward - a.reward);
+  else items.sort((a,b) => b.posted - a.posted);
+
+  const grid = document.getElementById('bountiesGrid');
+  const empty = document.getElementById('emptyState');
+  document.getElementById('resultLabel').textContent = `${items.length} bounties`;
+
+  if (!items.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  grid.innerHTML = items.map((b, i) => `
+    <div class="bounty-card" style="animation-delay:${i*0.05}s" onclick="applyBounty(${b.id})">
+      <div class="card-header">
+        <span class="card-category cat-${b.cat}">${CAT_LABELS[b.cat]}</span>
+        <div class="reward-badge">⬡ ${formatReward(b.reward)} TNK</div>
+      </div>
+      <div class="card-title">${b.title}</div>
+      <div class="card-desc">${b.desc}</div>
+      <div class="card-footer">
+        <div class="poster-info">
+          <div class="avatar" style="background:${b.color}22;color:${b.color}">${b.poster}</div>
+          <span>${formatTime(b.posted)}</span>
+        </div>
+        <div class="card-meta">
+          <span class="status-badge status-${b.status}">${STATUS_LABELS[b.status]}</span>
+          <span>${b.applies} applied</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function applyBounty(id) {
+  const b = userBounties.find(x => x.id === id);
+  if (!b) return;
+  b.applies++;
+  addFeedItem('👤', `<b>${randomHandle()}</b> applied to <b>${b.title.slice(0,30)}...</b>`, 'just now');
+  renderBoard();
+  showToast(`Application sent over Intercom sidechannel!`);
+}
+
+const FEED_EVENTS = [
+  ['⬡', 'New bounty posted: <b>Agent Voting System</b>', '2s ago'],
+  ['✓', '<b>TracStamp</b> bounty marked complete', '4m ago'],
+  ['👤', '<b>vLdT</b> applied to Python port bounty', '11m ago'],
+  ['⚡', 'Escrow settled: 2,500 TNK released', '23m ago'],
+  ['⬡', 'New bounty: <b>Mobile Push Notifications</b>', '41m ago'],
+  ['👤', '<b>8xPq</b> applied to Oracle Widget', '1h ago'],
+  ['✓', 'Agent-agent demo task completed', '2h ago'],
+];
+
+function renderFeed() {
+  const feed = document.getElementById('activityFeed');
+  feed.innerHTML = FEED_EVENTS.map(([icon, text, time], i) => `
+    <div class="feed-item" style="animation-delay:${i*0.07}s">
+      <div class="feed-icon">${icon}</div>
+      <div class="feed-content">
+        <div style="font-size:0.75rem">${text}</div>
+        <div class="feed-time">${time}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function randomHandle() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from({length:4}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+
+function addFeedItem(icon, text, time) {
+  const feed = document.getElementById('activityFeed');
+  const div = document.createElement('div');
+  div.className = 'feed-item';
+  div.innerHTML = `<div class="feed-icon">${icon}</div><div class="feed-content"><div style="font-size:0.75rem">${text}</div><div class="feed-time">${time}</div></div>`;
+  feed.prepend(div);
+  if (feed.children.length > 8) feed.removeChild(feed.lastChild);
+}
+
+function openModal() {
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function submitBounty() {
+  const title = document.getElementById('fTitle').value.trim();
+  const desc = document.getElementById('fDesc').value.trim();
+  const cat = document.getElementById('fCat').value;
+  const reward = parseInt(document.getElementById('fReward').value) || 500;
+  const trac = document.getElementById('fTrac').value.trim();
+  if (!title || !desc) { showToast('Title and description required.'); return; }
+
+  const newBounty = {
+    id: Date.now(), title, desc, cat, reward,
+    status: 'open', poster: randomHandle(),
+    color: ['#47ffe8','#c084fc','#ff6b35','#fbbf24','#34d399'][Math.floor(Math.random()*5)],
+    posted: Date.now(), applies: 0
+  };
+  userBounties.unshift(newBounty);
+  renderBoard();
+  addFeedItem('⬡', `New bounty posted: <b>${title.slice(0,30)}</b>`, 'just now');
+  updateStats();
+  closeModal();
+  showToast('Bounty broadcast to Intercom network!');
+  document.getElementById('fTitle').value='';
+  document.getElementById('fDesc').value='';
+  document.getElementById('fReward').value='';
+  document.getElementById('fTrac').value='';
+}
+
+function updateStats() {
+  const open = userBounties.filter(b => b.status === 'open').length;
+  const tnk = userBounties.reduce((s,b) => s+b.reward, 0);
+  document.getElementById('statOpen').textContent = open;
+  document.getElementById('statTNK').textContent = tnk.toLocaleString();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Simulated network tick
+let blockH = 1204817;
+function networkTick() {
+  blockH += Math.floor(Math.random()*3)+1;
+  document.getElementById('blockHeight').textContent = blockH.toLocaleString();
+  document.getElementById('latency').textContent = `~${Math.floor(Math.random()*20+8)}ms`;
+  const peers = Math.floor(Math.random()*3)+3;
+  document.getElementById('peerCount').textContent = `${peers} peers`;
+  document.getElementById('statPeers').textContent = peers;
+}
+
+// Occasional random activity
+function randomActivity() {
+  const events = [
+    () => addFeedItem('👤', `<b>${randomHandle()}</b> applied to a bounty`, 'just now'),
+    () => addFeedItem('⚡', `Escrow settled: ${Math.floor(Math.random()*2000+200)} TNK released`, 'just now'),
+    () => addFeedItem('⬡', `New bounty posted by <b>${randomHandle()}</b>`, 'just now'),
+  ];
+  events[Math.floor(Math.random()*events.length)]();
+}
+
+renderBoard();
+renderFeed();
+setInterval(networkTick, 3000);
+setInterval(randomActivity, 8000);
+</script>
+</body>
+</html>
